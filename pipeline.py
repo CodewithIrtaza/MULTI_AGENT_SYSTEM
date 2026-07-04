@@ -1,27 +1,5 @@
-import time
-import re
 from agents import build_search_agent, build_reader_agent, writer_chain, critic_chain
-
-def _invoke_with_retry(fn, input_data, max_retries=2):
-    """Retry wrapper that handles Groq 429 rate limit errors with backoff."""
-    for attempt in range(max_retries):
-        try:
-            return fn(input_data)
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "rate_limit" in error_str.lower():
-                # Try to extract wait time from the error message
-                match = re.search(r"try again in (\d+)m([\d.]+)s", error_str, re.IGNORECASE)
-                if match:
-                    wait = int(match.group(1)) * 60 + float(match.group(2))
-                else:
-                    wait = 10 * (attempt + 1)  # fallback: 10s, 20s (was 60s, 120s)
-                print(f"\n⚠️  Rate limited! Waiting {wait:.0f}s before retry ({attempt+1}/{max_retries})...")
-                time.sleep(wait)
-            else:
-                raise  # re-raise non-rate-limit errors immediately
-    # Final attempt — let it raise if it fails
-    return fn(input_data)
+from rich import print
 
 def run_reseacrh_pipeline(topic: str) -> dict:
     state = {}
@@ -31,7 +9,7 @@ def run_reseacrh_pipeline(topic: str) -> dict:
     print("="*50)
 
     search_agent = build_search_agent()
-    search_result = _invoke_with_retry(search_agent.invoke, {
+    search_result = search_agent.invoke({
         "messages": 
         [{
             "role": "user", 
@@ -46,7 +24,7 @@ def run_reseacrh_pipeline(topic: str) -> dict:
     print("="*50)
 
     reader_agent = build_reader_agent()
-    reader_result = _invoke_with_retry(reader_agent.invoke, {
+    reader_result = reader_agent.invoke({
         "messages":[{
             "role": "user", 
             "content": f"""Based on the following search results about '{topic}', 
@@ -66,7 +44,7 @@ def run_reseacrh_pipeline(topic: str) -> dict:
     f"DETAILED SCRAPED CONTENT : \n {state['scraped_result']}"
     )
 
-    state["report"] = _invoke_with_retry(writer_chain.invoke, {
+    state["report"] = writer_chain.invoke({
         "topic" : topic,
         "research" : research_combined
     })
@@ -76,7 +54,7 @@ def run_reseacrh_pipeline(topic: str) -> dict:
     print("step 4 - critic is reviewing the report ")
     print("="*50)
 
-    state['feedback'] = _invoke_with_retry(critic_chain.invoke, {
+    state['feedback'] = critic_chain.invoke({
         "report" : state['report']
     })
     print(state['feedback'])
