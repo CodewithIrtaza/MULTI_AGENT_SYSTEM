@@ -1,4 +1,3 @@
-import time
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import create_agent
@@ -13,15 +12,8 @@ load_dotenv()
 # Writer/critic chains don't use tools, so the cheaper 8b model works fine
 # and saves the bulk of our token budget.
 
-llm_tools = ChatGroq(
+llm = ChatGroq(
     model="llama-3.3-70b-versatile",
-    temperature=0.3,
-    max_retries=2,
-    request_timeout=30,
-)
-
-llm_text = ChatGroq(
-    model="llama-3.1-8b-instant",
     temperature=0.3,
     max_retries=2,
     request_timeout=30,
@@ -30,7 +22,7 @@ llm_text = ChatGroq(
 
 def build_search_agent():
     return create_agent(
-        model=llm_tools,
+        model=llm,
         tools=[search_web],
         system_prompt=(
             "You are a research search agent. You MUST use the 'search_web' tool "
@@ -42,7 +34,7 @@ def build_search_agent():
 
 def build_reader_agent():
     return create_agent(
-        model=llm_tools,
+        model=llm,
         tools=[scrape_url],
         system_prompt=(
             "You are a web reader agent. You MUST use the 'scrape_url' tool "
@@ -74,7 +66,7 @@ writer_prompt = ChatPromptTemplate.from_messages([
     ),
 ])
 
-writer_chain = writer_prompt | llm_text | StrOutputParser()
+writer_chain = writer_prompt | llm | StrOutputParser()
 
 critic_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a sharp and constructive research critic. Be honest and specific."),
@@ -101,4 +93,4 @@ critic_prompt = ChatPromptTemplate.from_messages([
     ),
 ])
 
-critic_chain = critic_prompt | llm_text | StrOutputParser()
+critic_chain = critic_prompt | llm | StrOutputParser()
