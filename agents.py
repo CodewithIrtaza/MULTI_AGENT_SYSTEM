@@ -12,8 +12,15 @@ load_dotenv()
 # Writer/critic chains don't use tools, so the cheaper 8b model works fine
 # and saves the bulk of our token budget.
 
-llm = ChatGroq(
+llm_tools = ChatGroq(
     model="llama-3.3-70b-versatile",
+    temperature=0.3,
+    max_retries=2,
+    request_timeout=30,
+)
+
+llm_text = ChatGroq(
+    model="llama-3.1-8b-instant",
     temperature=0.3,
     max_retries=2,
     request_timeout=30,
@@ -22,25 +29,27 @@ llm = ChatGroq(
 
 def build_search_agent():
     return create_agent(
-        model=llm,
+        model=llm_tools,
         tools=[search_web],
         system_prompt=(
-            "You are a research search agent. You MUST use the 'search_web' tool "
-            "to find information. Do NOT invent or hallucinate any other tool names. "
-            "The ONLY tool available to you is 'search_web'. "
-            "Call it with a clear, specific search query."
+            "You are a research search agent. "
+            "Use the 'search_web' tool ONCE to find information. "
+            "After getting results, summarize them and STOP. "
+            "Do NOT call search_web multiple times. "
+            "Do NOT invent any other tool names."
         ),
     )
 
 def build_reader_agent():
     return create_agent(
-        model=llm,
+        model=llm_tools,
         tools=[scrape_url],
         system_prompt=(
-            "You are a web reader agent. You MUST use the 'scrape_url' tool "
-            "to fetch content from URLs. Do NOT invent or hallucinate any other tool names. "
-            "The ONLY tool available to you is 'scrape_url'. "
-            "Call it with a valid URL from the search results."
+            "You are a web reader agent. "
+            "Use the 'scrape_url' tool ONCE to fetch content from ONE URL. "
+            "After getting content, summarize it and STOP. "
+            "Do NOT call scrape_url multiple times. "
+            "Do NOT invent any other tool names."
         ),
     )
 
@@ -66,7 +75,7 @@ writer_prompt = ChatPromptTemplate.from_messages([
     ),
 ])
 
-writer_chain = writer_prompt | llm | StrOutputParser()
+writer_chain = writer_prompt | llm_text | StrOutputParser()
 
 critic_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a sharp and constructive research critic. Be honest and specific."),
@@ -93,4 +102,4 @@ critic_prompt = ChatPromptTemplate.from_messages([
     ),
 ])
 
-critic_chain = critic_prompt | llm | StrOutputParser()
+critic_chain = critic_prompt | llm_text | StrOutputParser()
