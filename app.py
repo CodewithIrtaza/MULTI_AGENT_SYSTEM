@@ -22,7 +22,7 @@ st.set_page_config(
 def load_css():
     st.markdown("""
     <style>
-<<<<<<< Updated upstream
+
         /* Import Inter Font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -36,7 +36,7 @@ def load_css():
         }
 
         /* Hide Streamlit defaults */
-=======
+
         /* Fonts: Space Grotesk for display, Inter for body/UI */
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -72,12 +72,12 @@ def load_css():
             color: var(--text-primary);
         }
 
->>>>>>> Stashed changes
+
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
 
-<<<<<<< Updated upstream
+
         /* Typography */
         h1, h2, h3, h4 {
             font-weight: 700 !important;
