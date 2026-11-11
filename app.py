@@ -1,11 +1,8 @@
 import streamlit as st
 import markdown
 from datetime import datetime
-<<<<<<< Updated upstream
 from pipeline import run_reseacrh_pipeline
-=======
 from pipeline import run_research_pipeline
->>>>>>> Stashed changes
 
 # ==========================================
 # 1. PAGE CONFIGURATION & CUSTOM CSS
